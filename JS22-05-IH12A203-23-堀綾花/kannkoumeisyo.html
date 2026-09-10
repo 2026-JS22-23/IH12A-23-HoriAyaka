@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>観光名所紹介マップ：ジブリパーク</title>
+    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCAKLjisxFelKwIl1_G6MiEO9-ya7Twr5s&callback=console.debug&callback=initMap"></script>
+</head>
+
+<style>
+
+
+    #side{
+        top: 0;
+        background: #cd853f;
+        color: #ffffff;
+        text-align: center;
+        padding: 20px 0;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        position: fixed;
+        gap: 10px;
+        width: 20%;
+        height: 100%;
+        z-index: 98;
+    }
+
+    h1{
+        margin-top: 8px;
+        margin-bottom: 50px;
+        font-size: 2rem;
+
+
+    }
+
+    #infoWindowmajo{
+        width:280px;
+        font-family:"Yu Gothic";
+        background-color:#edbeed;
+        padding:10px;
+    }
+    #infoWindowsaisyun{
+        width:280px;
+        font-family:"Yu Gothic";
+        background-color:#99e6ff;
+        padding:10px;
+    }
+    #infoWindowsouko{
+        width:280px;
+        font-family:"Yu Gothic";
+        background-color:#ffdb99;
+        padding:10px;
+    }
+
+    .photolist{
+        display:flex;
+        gap:20px;
+        overflow-y:auto;
+        scroll-behavior:smooth;
+    }
+
+    .photolist img{
+        width:250px;
+        height:180px;
+        object-fit:cover;
+        border-radius:15px;
+        flex-shrink:0;
+        transition:0.3s;
+        box-shadow:0 5px 15px rgba(0,0,0,.25);
+    }
+
+    .infoWindow h2{
+        color:#2f5d34;
+        font-size:22px;
+    }
+
+
+
+    .infoWindow p{
+        font-size:14px;
+        line-height:1.6;
+    }
+
+    .infoWindow a{
+        display:inline-block;
+        margin-top:5px;
+        padding:8px 15px;
+        width:80%;
+        text-align:center;
+        color:white;
+        text-decoration:none;
+        border-radius:20px;
+    }
+
+    #kousikilink{
+        background:#6b8e23;
+        display:inline-block;
+        margin-top:5px;
+        padding:8px 15px;
+        width:80%;
+        text-align:center;
+        color:white;
+        text-decoration:none;
+        border-radius:20px;
+
+    }
+    #majolink{
+        background:#ee82ee;
+    }
+    #seishunnookalink{
+        background:#00bfff;
+    }
+    #daisoukolink{
+        background:#ff8c00;
+    }
+
+
+    #map{
+        width:100%;
+        height:600px;
+    }
+
+
+</style>
+<body>
+    <main>
+
+        <div id="map"></div>
+        <div id="side">
+            <h1>ジブリパーク</h1>
+            <div id="access">
+                <p>・営業時間:<br>
+                    　　平日：10:00～17:00<br>　　土・日・休：9:00～17:00<br><br>
+                   ・アクセス<br>愛知高速交通<br>東部丘陵線（リニモ『愛・地球博記念公園』駅下車すぐ
+                   
+                </p>
+                <a href="https://ghibli-park.jp/about/majonotani.html" target="_blank" id="kousikilink">公式サイト</a>
+
+            </div>
+        </div>
+
+
+        <script>
+
+
+
+
+
+
+
+        function initMap() {
+            // 画面を開いたときの初期値
+            const map = new google.maps.Map(document.getElementById("map"), {
+            zoom: 17,
+            center:{lat:35.173924627560886,lng:137.09120734969517},
+            zoomControl: true,
+            mapTypeControl: true,
+            streetViewControl: false
+            });
+
+
+        
+
+
+
+            // 複数地点のデータを配列で用意
+            // name:地点名, lat:緯度, lng:経度, content:詳細情報のHTML
+            const locations = [
+            {
+                name:"魔女の谷",
+                lat:35.173924627560886,
+                lng:137.09120734969517,
+                content:`
+                    <div id="infoWindowmajo" class="infoWindow">
+                    <div class="photolist">
+                        <img src="images/majo1.jpg">
+                        <img src="images/majo2.jpg">
+                        <img src="images/majo3.jpg">
+                    </div>
+                    <h2>🧹 魔女の谷</h2>
+                    <div class="star">⭐⭐⭐⭐✫</div>
+                    <p>『魔女の宅急便』や『ハウルの動く城』をイメージしたエリアです。</p>
+                    <a href="https://ghibli-park.jp/about/majonotani.html" target="_blank" id="majolink">公式サイト</a>
+                    </div>`
+            },
+            {
+                name:"青春の丘",
+                lat:35.1758501154894,
+                lng:137.08923962413937,
+                content:`
+                    <div id="infoWindowsaisyun" class="infoWindow">
+                    <div class="photolist">
+                        <img src="images/seisyun1.jpg">
+                        <img src="images/seisyun2.jpg">
+                        <img src="images/seisyun3.jpg">
+                    </div>
+                    <h2>🌿 青春の丘</h2>
+                    <div class="star">⭐⭐⭐⭐✫</div>
+                    <p>『耳をすませば』の世界を再現したエリアです。</p>
+                    <a href="https://ghibli-park.jp/about/seishunnooka.html" target="_blank" id="seishunnookalink">公式サイト</a>
+                    </div>`
+            },
+            {
+                name:"ジブリの大倉庫",
+                lat:35.173677945885984,
+                lng:137.0894856813148,
+                content:`
+                    <div id="infoWindowsouko" class="infoWindow">
+                    <div class="photolist">
+                        <img src="images/souko1.jpg">
+                        <img src="images/souko2.jpg">
+                        <img src="images/souko3.jpg">
+                    </div>
+                    <h2>📚 ジブリの大倉庫</h2>
+                    <div class="star">⭐⭐⭐⭐⭐</div>
+                    <p>展示やショップなどが集まる大型施設です。</p>
+                    <a href="https://ghibli-park.jp/about/ookurasouko.html" target="_blank" id="daisoukolink">公式サイト</a>
+                    </div>`
+            }
+            ];
+
+            // 配列の各地点にマーカーを設置し、クリックイベントで詳細情報を表示
+            // loc.name, loc.lat, loc.lng, loc.contentを使ってマーカーと情報ウィンドウを作成
+            locations.forEach(function(loc){
+
+                const marker = new google.maps.Marker({
+                    position:{
+                        lat:loc.lat,
+                        lng:loc.lng
+                    },
+                    map:map,
+                    title:loc.name
+                });
+
+                const infoWindow = new google.maps.InfoWindow({
+                    content:loc.content
+                });
+
+                marker.addListener("click",function(){
+                    infoWindow.open(map,marker);
+                });
+
+            });
+
+
+
+        }
+
+        // マップの初期化を待つ
+        window.initMap = initMap;
+        // マップの初期化が完了したら、マップを表示する
+        window.addEventListener("load", () => {
+            initMap();
+        });
+
+        $('p').on('click',function(){
+            $('#maku').slideUp(1200);
+        })
+
+    
+        </script>
+    </main>
+</body>
+</html>
+
+<!-- 
+
+
+
+複数にポイントをつけないといけないので、魔女の谷、青春の丘、ジブリの大倉庫
+クリックイベントで詳細を表示する。詳細ウィンドウをジブリ風に装飾
+アニメーションをつけて動きを見せる
+画像を用意して画像、名前、詳細、リンク情報を張り付ける
+
+
+加点＋
+    サムネイル画像の表示
+    公式サイトと同じ感じにならないように、ポップな雰囲気を少し弱くして再現する。
+
+-->
+
