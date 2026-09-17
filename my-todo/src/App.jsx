@@ -1,122 +1,141 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useEffect, useMemo, useState } from 'react';
 
-function App() {
-  const [count, setCount] = useState(0)
+const initialTodos = [
+  { id: 1, text: 'React の基本を復習する', completed: true },
+  { id: 2, text: 'TODO をひとつ追加する', completed: false },
+  { id: 3, text: 'コードを保存して画面を確認する', completed: false },
+];
 
+// TODO 1件分を表示する部品
+function TodoItem({ todo, onToggle, onDelete }) {
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    <li className={`todo-item ${todo.completed ? 'is-completed' : ''}`}>
+      <label className="todo-label">
+        <input
+          type="checkbox"
+          checked={todo.completed}
+          onChange={() => onToggle(todo.id)}
+        />
+        <span className="checkmark" aria-hidden="true">✓</span>
+        <span>{todo.text}</span>
+      </label>
+      <button className="delete-button" type="button" onClick={() => onDelete(todo.id)} aria-label={`${todo.text}を削除`}>
+        ×
+      </button>
+    </li>
+  );
 }
 
-export default App
+// 残り件数と完了済み削除ボタンを表示する部品
+function TodoSummary({ remaining, total, onClearCompleted }) {
+  return (
+    <div className="summary">
+      <p><strong>{remaining}</strong> 件が残っています <span aria-hidden="true">/</span> 全 {total} 件</p>
+      <button type="button" className="text-button" onClick={onClearCompleted}>完了済みを削除</button>
+    </div>
+  );
+}
+
+export default function App() {
+  // TODOの一覧を管理するstate。保存済みのデータがあればそれを使う
+  const [todos, setTodos] = useState(() => {
+    const savedTodos = localStorage.getItem('react-todos');
+    return savedTodos ? JSON.parse(savedTodos) : initialTodos;
+  });
+  // 入力欄の文字を管理するstate
+  const [text, setText] = useState('');
+  // 表示するTODOの絞り込み条件を管理するstate
+  const [filter, setFilter] = useState('all');
+
+  // TODOが変わるたびにブラウザへ保存する
+  useEffect(() => {
+    localStorage.setItem('react-todos', JSON.stringify(todos));
+  }, [todos]);
+
+  const remaining = todos.filter((todo) => !todo.completed).length;
+  // 絞り込み条件に合うTODOだけを画面に表示する
+  const visibleTodos = useMemo(() => {
+    if (filter === 'active') return todos.filter((todo) => !todo.completed);
+    if (filter === 'completed') return todos.filter((todo) => todo.completed);
+    return todos;
+  }, [filter, todos]);
+
+  function addTodo(event) {
+    event.preventDefault();
+    const trimmedText = text.trim();
+    if (!trimmedText) return;
+
+    // 元の配列を直接変更せず、新しい配列を作って追加する
+    setTodos((currentTodos) => [
+      ...currentTodos,
+      { id: Date.now(), text: trimmedText, completed: false },
+    ]);
+    setText('');
+  }
+
+  function toggleTodo(id) {
+    // チェックされたTODOだけ、完了状態を反対にする
+    setTodos((currentTodos) => currentTodos.map((todo) => (
+      todo.id === id ? { ...todo, completed: !todo.completed } : todo
+    )));
+  }
+
+  function deleteTodo(id) {
+    // 削除するTODO以外を残す
+    setTodos((currentTodos) => currentTodos.filter((todo) => todo.id !== id));
+  }
+
+  function clearCompleted() {
+    // 完了していないTODOだけを残す
+    setTodos((currentTodos) => currentTodos.filter((todo) => !todo.completed));
+  }
+
+  return (
+    <main className="app-shell">
+      <section className="todo-page" aria-labelledby="page-title">
+        <header className="page-header">
+          <p className="eyebrow">DAILY DESK <span>2026</span></p>
+          <h1 id="page-title">今日の TODO<span>.</span></h1>
+          <p className="intro">頭の中のことを、ひとつずつ片づける。</p>
+        </header>
+
+        <form className="add-form" onSubmit={addTodo}>
+          <label className="sr-only" htmlFor="new-todo">新しい TODO</label>
+          <input
+            id="new-todo"
+            value={text}
+            onChange={(event) => setText(event.target.value)}
+            placeholder="新しい TODO を入力"
+          />
+          <button type="submit">追加 <span aria-hidden="true">↵</span></button>
+        </form>
+
+        <div className="toolbar">
+          <div className="filters" aria-label="TODO の絞り込み">
+            {[
+              ['all', 'すべて'],
+              ['active', '未完了'],
+              ['completed', '完了済み'],
+            ].map(([value, label]) => (
+              <button key={value} type="button" className={filter === value ? 'is-selected' : ''} onClick={() => setFilter(value)}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <span className="date-label">THU / SEP 17</span>
+        </div>
+
+        <ul className="todo-list">
+          {visibleTodos.length > 0 ? visibleTodos.map((todo) => (
+            <TodoItem key={todo.id} todo={todo} onToggle={toggleTodo} onDelete={deleteTodo} />
+          )) : (
+            <li className="empty-state">この条件の TODO はありません。</li>
+          )}
+        </ul>
+
+        <TodoSummary remaining={remaining} total={todos.length} onClearCompleted={clearCompleted} />
+        <footer className="page-footer">REACT / USESTATE / MAP</footer>
+      </section>
+    </main>
+  );
+}
